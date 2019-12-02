@@ -3,6 +3,8 @@ defmodule Aoc2019.Day2 do
   I'm going to use a Map to get a faster access and update to values at specific addresses
   """
   @type address :: integer
+  @type nount :: integer
+  @type verb :: integer
   @type opcode :: 1 | 2 | 99
   @type memory :: %{address => integer}
 
@@ -35,6 +37,13 @@ defmodule Aoc2019.Day2 do
     |> Enum.map(&(elem(&1, 1)))
   end
 
+  defp add(memory, addr1, addr2, result_addr) do
+    Map.put(memory, memory[result_addr], memory[memory[addr1]] + memory[memory[addr2]])
+  end
+
+  defp mul(memory, addr1, addr2, result_addr) do
+    Map.put(memory, memory[result_addr], memory[memory[addr1]] * memory[memory[addr2]])
+  end
 
 
   @doc """
@@ -53,8 +62,8 @@ defmodule Aoc2019.Day2 do
     # memory[address + 1] and memory[address + 2] two numbers to add or multiply
     # memory[address + 3] is the position of the result
     case Map.get(memory, address) do
-      1 -> {:cont, Map.put(memory, memory[address + 3], memory[memory[address + 1]] + memory[memory[address + 2]])}
-      2 -> {:cont, Map.put(memory, memory[address + 3], memory[memory[address + 1]] * memory[memory[address + 2]])}
+      1 -> {:cont, add(memory, address + 1, address + 2, address + 3)}
+      2 -> {:cont, mul(memory, address + 1, address + 2, address + 3)}
       99 -> {:halt, memory}
     end
   end
@@ -78,10 +87,10 @@ defmodule Aoc2019.Day2 do
   Process instructions, setting values at address 1 and 2
   """
   @spec process_instructions(memory, integer, integer) :: memory
-  def process_instructions(memory, address_1_value, address_2_value) do
+  def process_instructions(memory, noun, verb) do
     memory
-    |> Map.put(1, address_1_value)
-    |> Map.put(2, address_2_value)
+    |> Map.put(1, noun)
+    |> Map.put(2, verb)
     |> process_instructions()
   end
 
@@ -110,21 +119,11 @@ defmodule Aoc2019.Day2 do
   def part2(input, wanted_result) do
     memory = input_to_map(input)
 
-    [{noun, verb}] =
-
-      Stream.iterate({0, 0}, fn
-        {addr_1, 99} -> {addr_1 + 1, 0}
-        {addr_1, addr_2} -> {addr_1, addr_2 + 1}
+    {noun, verb} =
+      for(noun <- 0..99, verb <- 0..99, do: {noun, verb})
+      |> Enum.find(fn {noun, verb} ->
+        process_instructions(memory, noun, verb) |> Map.get(0) == wanted_result
       end)
-
-      |> Stream.filter(fn {addr_1, addr_2} ->
-        result =
-          memory
-          |> process_instructions(addr_1, addr_2)
-          |> Map.get(0)
-        result == wanted_result
-      end)
-      |> Enum.take(1)
 
     100 * noun +  verb
   end
