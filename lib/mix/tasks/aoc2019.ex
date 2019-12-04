@@ -32,4 +32,9 @@ defmodule Mix.Tasks.Aoc2019 do
     Aoc2019.Day3.part2() |> IO.inspect(label: "day3/part2: ")
   end
 
+  @shortdoc "Runs the day4 part1"
+  def run(["day4", "part1"]) do
+    Aoc2019.Day4.part1() |> IO.inspect(label: "day4/part1: ")
+  end
+
 end
