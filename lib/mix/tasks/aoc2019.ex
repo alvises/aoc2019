@@ -43,7 +43,13 @@ defmodule Mix.Tasks.Aoc2019 do
   end
 
   def run(["day5", "part1"]) do
-    Aoc2019.Day5.part1() |> IO.inspect(label: "[day5/part1] diagnostic code: ")
+    File.read!("inputs/day5.txt")
+    |> Aoc2019.Day5.run(fn _ -> "1" end)
+  end
+
+  def run(["day5", "part2"]) do
+    File.read!("inputs/day5.txt")
+    |> Aoc2019.Day5.run(fn _ -> "5" end)
   end
 
 end

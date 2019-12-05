@@ -7,7 +7,7 @@ defmodule Aoc2019.Day5 do
   @type nount :: integer
   @type verb :: integer
   @type param_mode :: 0 | 1 # 0 = position, 1 = immediate
-  @type opcode :: 1 | 2 | 3 | 4 | 5 | 99 # 1 = add, 2 = mul, 3 = read stdin, 4 = write stdout, 99 = halt
+  @type opcode :: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 99 # 1 = add, 2 = mul, 3 = read stdin, 4 = write stdout, 99 = halt
   @type memory :: %{address => integer}
 
   @doc """
@@ -70,7 +70,9 @@ defmodule Aoc2019.Day5 do
       {3, modes} -> {address + 2, read_input(memory, {address + 1, mode(modes,0)}, gets_fun)}
       {4, modes} -> {address + 2, write_output(memory, {address + 1, mode(modes,0)})}
       {5, modes} -> jump_if_true(memory, address, modes)
-      # {6, modes} -> jump_if_false(memory, address, modes)
+      {6, modes} -> jump_if_false(memory, address, modes)
+      {7, modes} -> less_then(memory, address, modes)
+      {8, modes} -> equals(memory, address, modes)
       {99, _} -> {:halt, memory}
     end
   end
@@ -119,6 +121,41 @@ defmodule Aoc2019.Day5 do
   end
 
   @doc """
+  if the first parameter is less than the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
+  """
+  @spec less_then(memory, address, [param_mode]) :: {address, memory}
+  def less_then(memory, address, modes) do
+    v1 = get(memory, {address + 1, mode(modes, 0)})
+    v2 = get(memory, {address + 2, mode(modes, 1)})
+    r_addr_mode = {address + 3, mode(modes, 2)}
+    pointer = address + 4
+
+    if v1 < v2 do
+      {pointer, put(memory, r_addr_mode, 1)}
+    else
+      {pointer, put(memory, r_addr_mode, 0)}
+    end
+  end
+
+  @doc """
+  if the first parameter is less than the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
+  """
+  @spec equals(memory, address, [param_mode]) :: {address, memory}
+  def equals(memory, address, modes) do
+    v1 = get(memory, {address + 1, mode(modes, 0)})
+    v2 = get(memory, {address + 2, mode(modes, 1)})
+    r_addr_mode = {address + 3, mode(modes, 2)}
+    pointer = address + 4
+
+    if v1 == v2 do
+      {pointer, put(memory, r_addr_mode, 1)}
+    else
+      {pointer, put(memory, r_addr_mode, 0)}
+    end
+  end
+
+
+  @doc """
   Reads input from user, sets it into memory and returns the memory
     ## Examples
     iex> import Aoc2019.Day5
@@ -159,14 +196,6 @@ defmodule Aoc2019.Day5 do
 
   end
 
-  def opcode_to_atom(opcode) do
-    case opcode do
-      1 -> :add
-      2 -> :mul
-      99 -> :halt
-    end
-  end
-
   @doc """
   Process all instructions until 99 opcode is found
 
@@ -201,19 +230,15 @@ defmodule Aoc2019.Day5 do
   Runs part1
     ## Examples
       iex> alias Aoc2019.Day5, as: VM
-      iex> VM.part1("1002,4,3,4,33")
+      iex> VM.run("1002,4,3,4,33")
       %{0 => 1002, 1 => 4, 2 => 3, 3 => 4, 4 => 99}
-      iex> VM.part1("1101,100,-1,4,0") |> Map.get(4)
+      iex> VM.run("1101,100,-1,4,0") |> Map.get(4)
       99
   """
-  def part1(input, gets_fun \\ &(IO.gets(&1))) do
+  def run(input, gets_fun \\ &(IO.gets(&1))) do
     input
     |> input_to_map()
     |> process_instructions(gets_fun)
   end
-
-  def part1, do: File.read!("inputs/day5.txt") |> part1()
-
-
 
 end
