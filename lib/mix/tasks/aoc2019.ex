@@ -42,4 +42,8 @@ defmodule Mix.Tasks.Aoc2019 do
     Aoc2019.Day4.part2() |> IO.inspect(label: "day4/part2: ")
   end
 
+  def run(["day5", "part1"]) do
+    Aoc2019.Day5.part1() |> IO.inspect(label: "[day5/part1] diagnostic code: ")
+  end
+
 end
