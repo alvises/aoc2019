@@ -144,7 +144,7 @@ defmodule Aoc2019.Day6.Part2 do
     ...> K)L
     ...> K)YOU
     ...> I)SAN")
-    {4,["SAN", "I", "D", "E", "J", "K", "YOU"]}
+    {7,["SAN", "I", "D", "E", "J", "K", "YOU"]}
   """
   def run(input) do
     input
@@ -160,7 +160,7 @@ defmodule Aoc2019.Day6.Part2 do
   the number of steps - 2 verteces (src and dst) - 1
 
     ## Example
-    iex> Aoc2019.Day6.Part2.run(
+    iex> Aoc2019.Day6.Part2.part2(
     ...> "COM)B
     ...> B)C
     ...> C)D
