@@ -1,7 +1,7 @@
-defmodule Aoc2019.Day6Test do
+defmodule Aoc2019.Day6.Part1Test do
   use ExUnit.Case
-  doctest Aoc2019.Day6
-  alias Aoc2019.Day6, as: Orbits
+  doctest Aoc2019.Day6.Part1
+  alias Aoc2019.Day6.Part1, as: Orbits
 
   test "get_direct_orbits/1" do
     assert """
@@ -98,4 +98,6 @@ defmodule Aoc2019.Day6Test do
 
     end
   end
+
+
 end

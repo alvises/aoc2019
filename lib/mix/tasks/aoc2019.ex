@@ -52,8 +52,14 @@ defmodule Mix.Tasks.Aoc2019 do
     |> Aoc2019.Day5.run(fn _ -> "5" end)
   end
 
-    def run(["day6", "part1"]) do
-    Aoc2019.Day6.part1() |> IO.inspect(label: "day6/part1: ")
+  def run(["day6", "part1"]) do
+    Aoc2019.Day6.Part1.run() |> IO.inspect(label: "day6/part1: ")
+  end
+
+  def run(["day6", "part2"]) do
+    File.read!("inputs/day6.txt")
+    |> Aoc2019.Day6.Part2.part2()
+    |> IO.inspect(label: "day6/part2: ")
   end
 
 end

@@ -1,4 +1,4 @@
-defmodule Aoc2019.Day6 do
+defmodule Aoc2019.Day6.Part1 do
   @type obj :: String.t()
   @type orbit :: %{o: String.t(), dist: integer}
   @type orbits :: %{obj => orbit}
@@ -50,13 +50,13 @@ defmodule Aoc2019.Day6 do
   end
 
 
-  def part1(input) do
+  def run(input) do
     input
-    |> Aoc2019.Day6.to_map()
-    |> Aoc2019.Day6.orbits_count()
+    |> to_map()
+    |> orbits_count()
   end
 
-  def part1 do
-    File.read!("inputs/day6.txt") |> part1()
+  def run do
+    File.read!("inputs/day6.txt") |> run()
   end
 end
