@@ -52,4 +52,8 @@ defmodule Mix.Tasks.Aoc2019 do
     |> Aoc2019.Day5.run(fn _ -> "5" end)
   end
 
+    def run(["day6", "part1"]) do
+    Aoc2019.Day6.part1() |> IO.inspect(label: "day6/part1: ")
+  end
+
 end
