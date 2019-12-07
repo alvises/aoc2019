@@ -1,6 +1,4 @@
 defmodule Aoc2019.Day7 do
-  alias __MODULE__, as: VM
-
   @moduledoc """
   I'm going to use a Map to get a faster access and update to values at specific addresses
   """
@@ -10,7 +8,7 @@ defmodule Aoc2019.Day7 do
   @type param_mode :: 0 | 1 # 0 = position, 1 = immediate
   @type opcode :: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 99 # 1 = add, 2 = mul, 3 = read stdin, 4 = write stdout, 99 = halt
   @type memory :: %{address => integer}
-  @type vm :: %{memory: memory, ip: integer, input: term(), output: [], halted: boolean}
+  @type vm :: %{memory: memory, ip: integer, input: term(), output: [integer], halted: boolean}
 
 
 
@@ -93,12 +91,12 @@ defmodule Aoc2019.Day7 do
   end
 
   @spec mul(vm, [param_mode]) :: vm
-  defp mul(%{memory: memory, ip: ip}=vm, modes) do
-    v1 = get(memory, {ip + 1, mode(modes, 0)})
-    v2 = get(memory, {ip + 2, mode(modes, 1)})
-    r_addr_mode = {ip + 3, mode(modes, 2)}
+  defp mul(vm, modes) do
+    v1 = get(vm.memory, {vm.ip + 1, mode(modes, 0)})
+    v2 = get(vm.memory, {vm.ip + 2, mode(modes, 1)})
+    r_addr_mode = {vm.ip + 3, mode(modes, 2)}
 
-    %{vm | ip: ip + 4, memory: put(memory, r_addr_mode, v1 * v2)}
+    %{vm | ip: vm.ip + 4, memory: put(vm.memory, r_addr_mode, v1 * v2)}
   end
 
 
@@ -106,11 +104,11 @@ defmodule Aoc2019.Day7 do
   if the first parameter is non-zero, it sets the instruction pointer to the value from the second parameter.
   """
   @spec jump_if_true(vm, [param_mode]) :: vm
-  def jump_if_true(%{memory: memory, ip: ip}=vm, modes) do
-    if get(memory, {ip + 1, mode(modes, 0)}) != 0 do
-      %{vm | ip: get(memory, {ip + 2, mode(modes, 1)})}
+  def jump_if_true(vm, modes) do
+    if get(vm.memory, {vm.ip + 1, mode(modes, 0)}) != 0 do
+      %{vm | ip: get(vm.memory, {vm.ip + 2, mode(modes, 1)})}
     else
-      %{vm | ip: ip + 3}
+      %{vm | ip: vm.ip + 3}
     end
   end
 
@@ -130,17 +128,17 @@ defmodule Aoc2019.Day7 do
   if the first parameter is less than the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
   """
   @spec less_then(vm, [param_mode]) :: vm
-  def less_then(%{memory: memory, ip: ip}=vm, modes) do
-    v1 = get(memory, {ip + 1, mode(modes, 0)})
-    v2 = get(memory, {ip + 2, mode(modes, 1)})
-    r_addr_mode = {ip + 3, mode(modes, 2)}
-    new_ip = ip + 4
+  def less_then(vm, modes) do
+    v1 = get(vm.memory, {vm.ip + 1, mode(modes, 0)})
+    v2 = get(vm.memory, {vm.ip + 2, mode(modes, 1)})
+    r_addr_mode = {vm.ip + 3, mode(modes, 2)}
+    new_ip = vm.ip + 4
 
     if v1 < v2 do
-      %{vm | ip: new_ip, memory: put(memory, r_addr_mode, 1)}
+      %{vm | ip: new_ip, memory: put(vm.memory, r_addr_mode, 1)}
 
     else
-      %{vm | ip: new_ip, memory: put(memory, r_addr_mode, 0)}
+      %{vm | ip: new_ip, memory: put(vm.memory, r_addr_mode, 0)}
     end
   end
 
@@ -162,18 +160,15 @@ defmodule Aoc2019.Day7 do
   end
 
 
-  @doc """
-  Reads input from user, sets it into memory and returns the memory
-  """
   @spec read_input(vm, [param_mode]) :: vm
-  def read_input(vm, modes) do
+  defp read_input(vm, modes) do
     addr_mode_result = {vm.ip + 1, mode(modes,0)}
     {{:value, num}, input} = :queue.out(vm.input)
     %{vm | ip: vm.ip + 2, memory: put(vm.memory, addr_mode_result, num), input: input}
   end
 
   @spec write_output(vm, [param_mode]) :: vm
-  def write_output(vm, modes) do
+  defp write_output(vm, modes) do
     value = get(vm.memory, {vm.ip + 1, mode(modes,0)})
     %{vm | ip: vm.ip + 2, output: [value | vm.output]}
   end
