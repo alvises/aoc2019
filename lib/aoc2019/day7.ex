@@ -10,7 +10,8 @@ defmodule Aoc2019.Day7 do
   @type memory :: %{address => integer}
   @type vm :: %{memory: memory, ip: integer, input: term(), output: [integer], halted: boolean}
 
-
+  @type phase :: 0 | 1 | 2 | 3 | 4
+  @type signal :: integer
 
   @doc """
   Converts the list of intcodes into a Map
@@ -170,7 +171,7 @@ defmodule Aoc2019.Day7 do
   @spec write_output(vm, [param_mode]) :: vm
   defp write_output(vm, modes) do
     value = get(vm.memory, {vm.ip + 1, mode(modes,0)})
-    %{vm | ip: vm.ip + 2, output: [value | vm.output]}
+    %{vm | ip: vm.ip + 2, output: [value | vm.output], halted: true}
   end
 
 
@@ -218,4 +219,45 @@ defmodule Aoc2019.Day7 do
     |> run()
   end
 
+
+  @spec new_amplifier(String.t(), phase, signal) :: vm
+  def new_amplifier(program, phase, signal) do
+    program
+    |> input_to_map()
+    |> new_vm([phase, signal])
+  end
+
+  @doc """
+  Returns the output signal
+  """
+  @spec process_signal(String.t(), [phase], signal) :: integer
+  def process_signal(program, phases, input_signal) do
+    phases
+    |> Enum.reduce(input_signal, fn phase, input_signal->
+      new_amplifier(program, phase, input_signal)
+      |> run()
+      |> Map.get(:output)
+      |> List.first()
+    end)
+  end
+
+  # def permutations([]), do: []
+  def permutations([]), do: [[]]
+  def permutations(list) do
+    for elem <- list, rest <- permutations(list -- [elem]), do: [elem | rest]
+  end
+
+  @spec maximize_output(String.t(), signal) :: {signal, phase}
+  def maximize_output(program, input_signal) do
+    0..4
+    |> Enum.to_list()
+    |> permutations()
+    |> Enum.map(fn phase -> {process_signal(program, phase, input_signal), phase} end)
+    |> Enum.max_by(&elem(&1,0))
+  end
+
+  def part1(input) do
+    input
+    |> maximize_output(0)
+  end
 end

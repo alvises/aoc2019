@@ -93,4 +93,30 @@ defmodule Aoc2019.Day7Test do
       assert vm.output == [0]
     end
 
+    describe "process_signal" do
+      test "4,3,2,1,0 phase outputs 43210" do
+        assert "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
+        |> VM.process_signal([4,3,2,1,0], 0) == 43210
+      end
+    end
+
+    describe "maximize_output" do
+      test "finds the phase that maximizes the output" do
+        assert "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
+        |> VM.maximize_output(0) == {43210, [4,3,2,1,0]}
+      end
+    end
+
+    describe "permutations" do
+      test "permutations of [1,2,3]" do
+        assert VM.permutations([1,2,3])|> MapSet.new() == MapSet.new([
+          [1,2,3],
+          [1,3,2],
+          [2,1,3],
+          [2,3,1],
+          [3,1,2],
+          [3,2,1]
+        ])
+      end
+    end
 end
