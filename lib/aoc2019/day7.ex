@@ -171,7 +171,7 @@ defmodule Aoc2019.Day7 do
   @spec write_output(vm, [param_mode]) :: vm
   defp write_output(vm, modes) do
     value = get(vm.memory, {vm.ip + 1, mode(modes,0)})
-    %{vm | ip: vm.ip + 2, output: [value | vm.output], halted: true}
+    %{vm | ip: vm.ip + 2, output:  vm.output ++ [value]}
   end
 
 
@@ -210,8 +210,12 @@ defmodule Aoc2019.Day7 do
     %{memory: memory, ip: 0, input: :queue.from_list(input), output: [], halted: false}
   end
 
+  @doc """
+  Runs until the vm is halted: true, or it has an output
+  """
   @spec run(vm) :: vm
   def run(%{halted: true}=vm), do: vm
+  def run(%{output: [_output_signal]}=vm), do: vm
 
   def run(vm) do
     vm
@@ -227,17 +231,36 @@ defmodule Aoc2019.Day7 do
     |> new_vm([phase, signal])
   end
 
+  @spec add_input(vm, signal) :: vm
+  def add_input(vm, input_signal) do
+    %{vm | input: :queue.in(input_signal, vm.input)}
+  end
+
+  @spec pop_output(vm) :: {signal, vm}
+
+  def pop_output(%{output: [elem | rest]}=vm) do
+    {elem, %{vm | output: rest}}
+  end
+
+  def pop_output(%{output: [], input: input}=vm) do
+    {{:value, in_signal}, input} = :queue.out_r(input)
+    {in_signal, %{vm | input: input}}
+  end
+
   @doc """
   Returns the output signal
+  Outputs the updated VMs and the output signal
   """
-  @spec process_signal(String.t(), [phase], signal) :: integer
-  def process_signal(program, phases, input_signal) do
-    phases
-    |> Enum.reduce(input_signal, fn phase, input_signal->
-      new_amplifier(program, phase, input_signal)
-      |> run()
-      |> Map.get(:output)
-      |> List.first()
+  @spec process_signal([vm], signal) :: {[vm], signal}
+  def process_signal(amplifiers, input_signal) do
+    amplifiers
+    |> Enum.reduce({[], input_signal}, fn amplifier, {amplifiers, input_signal}->
+      {output_signal, amplifier} =
+        amplifier
+        |> add_input(input_signal)
+        |> run()
+        |> pop_output()
+      {amplifiers ++ [amplifier], output_signal}
     end)
   end
 
@@ -247,17 +270,54 @@ defmodule Aoc2019.Day7 do
     for elem <- list, rest <- permutations(list -- [elem]), do: [elem | rest]
   end
 
-  @spec maximize_output(String.t(), signal) :: {signal, phase}
-  def maximize_output(program, input_signal) do
-    0..4
-    |> Enum.to_list()
-    |> permutations()
-    |> Enum.map(fn phase -> {process_signal(program, phase, input_signal), phase} end)
-    |> Enum.max_by(&elem(&1,0))
+  @spec new_system(memory, [phase]) :: [vm]
+  def new_system(memory, phases) do
+    Enum.map(phases,&new_vm(memory, [&1]))
   end
 
-  def part1(input) do
-    input
-    |> maximize_output(0)
+  @spec system_halted?([vm]) :: boolean
+  def system_halted?(vms) do
+    List.last(vms) |> Map.get(:halted)
+  end
+
+  def part1(program) do
+    memory = input_to_map(program)
+    input_signal = 0
+
+
+    Enum.to_list(0..4)
+    |> permutations()
+    |> Enum.map(fn phases ->
+      {_, output_signal} =
+        new_system(memory, phases)
+        |> process_signal(input_signal)
+      {output_signal, phases}
+    end)
+    |> Enum.max_by(&elem(&1,0))
+    |> elem(0)
+  end
+
+  @spec run_feedback_loop([vm], signal) :: signal
+  def run_feedback_loop([%{halted: true} | _], input_signal),
+  do: input_signal
+
+  def run_feedback_loop(vms, input_signal) do
+    {vms, output_signal} = process_signal(vms, input_signal)
+    run_feedback_loop(vms, output_signal)
+  end
+
+
+  def part2(program) do
+    memory = input_to_map(program)
+    input_signal = 0
+
+    Enum.to_list(5..9)
+    |> permutations()
+    |> Enum.map(fn phases ->
+      # returns the output signal of the system
+      new_system(memory, phases)
+      |> run_feedback_loop(input_signal)
+    end)
+    |> Enum.max()
   end
 end
