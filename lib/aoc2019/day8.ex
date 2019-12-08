@@ -21,20 +21,29 @@ defmodule Aoc2019.Day8 do
     height = 6
     input
     |> digits()
+
+    # dividing digits in layers
     |> Enum.chunk_every(width * height)
-    |> Enum.reduce(nil, fn
-      layer, nil -> layer
-      layer, image ->
+
+    # stacking the layers
+    |> Enum.reduce(fn layer, image ->
         Enum.zip(image, layer)
         |> Enum.map(fn
+          # if transparent pixels, take the pixel of the back layer
+          # take the front pixel otherwise
           {2, layer_pixel} -> layer_pixel
           {image_pixel, _} -> image_pixel
         end)
     end)
+
+    # colors to the pixels of the final image
     |> Enum.map(fn
       0 -> IO.ANSI.black() <> "#"
       1 -> IO.ANSI.white() <> "#"
     end)
+
+    # divide the final image in row and columns
+    # joining them into a string
     |> Enum.chunk_every(width)
     |> Enum.join("\n")
   end
