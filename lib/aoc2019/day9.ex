@@ -67,23 +67,30 @@ defmodule Aoc2019.Day9 do
 
   @spec get(vm, {address, param_mode}) :: integer
   # param mode
-  def get(vm, {address, 0}), do: vm.memory[vm.memory[address]]
+  def get(vm, {address, 0}), do: vm.memory[vm.memory[address]] || 0
   # immediate mode
-  def get(vm, {address, 1}), do: vm.memory[address]
+  def get(vm, {address, 1}), do: vm.memory[address] || 0
   # relative mode
   def get(vm, {address, 2}) do
-    relative_address = vm.memory[address] + vm.relative_base
-    vm.memory[relative_address]
+    vm.memory[get_relative_address(vm, address)] || 0
   end
 
-  @spec put(memory, {address, param_mode}, integer) :: memory
-  def put(memory, {result_address, 0}, value) do
-    Map.put(memory, memory[result_address], value)
+  defp get_relative_address(vm, address), do: vm.memory[address] + vm.relative_base
+
+  @spec put(vm, {address, param_mode}, integer) :: memory
+  def put(vm, {result_address, 0}, value) do
+    Map.put(vm.memory, vm.memory[result_address], value)
   end
 
-  def put(memory, {result_address, 1}, value) do
-    Map.put(memory, result_address, value)
+  def put(vm, {result_address, 1}, value) do
+    Map.put(vm.memory, result_address, value)
   end
+
+  def put(vm, {result_address, 2}, value) do
+    result_address = get_relative_address(vm, result_address)
+    Map.put(vm.memory, result_address, value)
+  end
+
 
   @spec add(vm, [param_mode]) :: vm
   defp add(vm, modes) do
@@ -91,7 +98,7 @@ defmodule Aoc2019.Day9 do
     v2 = get(vm, {vm.ip + 2, mode(modes, 1)})
     r_addr_mode = {vm.ip + 3, mode(modes, 2)}
 
-    %{vm | ip: vm.ip + 4, memory: put(vm.memory, r_addr_mode, v1 + v2)}
+    %{vm | ip: vm.ip + 4, memory: put(vm, r_addr_mode, v1 + v2)}
   end
 
   @spec mul(vm, [param_mode]) :: vm
@@ -100,7 +107,7 @@ defmodule Aoc2019.Day9 do
     v2 = get(vm, {vm.ip + 2, mode(modes, 1)})
     r_addr_mode = {vm.ip + 3, mode(modes, 2)}
 
-    %{vm | ip: vm.ip + 4, memory: put(vm.memory, r_addr_mode, v1 * v2)}
+    %{vm | ip: vm.ip + 4, memory: put(vm, r_addr_mode, v1 * v2)}
   end
 
 
@@ -139,10 +146,10 @@ defmodule Aoc2019.Day9 do
     new_ip = vm.ip + 4
 
     if v1 < v2 do
-      %{vm | ip: new_ip, memory: put(vm.memory, r_addr_mode, 1)}
+      %{vm | ip: new_ip, memory: put(vm, r_addr_mode, 1)}
 
     else
-      %{vm | ip: new_ip, memory: put(vm.memory, r_addr_mode, 0)}
+      %{vm | ip: new_ip, memory: put(vm, r_addr_mode, 0)}
     end
   end
 
@@ -157,9 +164,9 @@ defmodule Aoc2019.Day9 do
     new_ip = vm.ip + 4
 
     if v1 == v2 do
-      %{vm | ip: new_ip, memory: put(vm.memory, r_addr_mode, 1)}
+      %{vm | ip: new_ip, memory: put(vm, r_addr_mode, 1)}
     else
-      %{vm | ip: new_ip, memory: put(vm.memory, r_addr_mode, 0)}
+      %{vm | ip: new_ip, memory: put(vm, r_addr_mode, 0)}
     end
   end
 
@@ -168,7 +175,7 @@ defmodule Aoc2019.Day9 do
   defp read_input(vm, modes) do
     addr_mode_result = {vm.ip + 1, mode(modes,0)}
     {{:value, num}, input} = :queue.out(vm.input)
-    %{vm | ip: vm.ip + 2, memory: put(vm.memory, addr_mode_result, num), input: input}
+    %{vm | ip: vm.ip + 2, memory: put(vm, addr_mode_result, num), input: input}
   end
 
   @spec write_output(vm, [param_mode]) :: vm
@@ -179,7 +186,7 @@ defmodule Aoc2019.Day9 do
 
   @spec update_relative_base(vm, [param_mode]) :: vm
   defp update_relative_base(vm, modes) do
-    value = get(vm, {vm.ip + 1, mode(modes,0)})
+    value = get(vm, {vm.ip + 1, mode(modes, 0)})
     %{vm | ip: vm.ip + 2, relative_base: vm.relative_base + value}
   end
 
@@ -219,12 +226,10 @@ defmodule Aoc2019.Day9 do
   end
 
   @doc """
-  Runs until the vm is halted: true, or it has an output
+  Runs until the vm is halted: true
   """
   @spec run(vm) :: vm
   def run(%{halted: true}=vm), do: vm
-  def run(%{output: [_output]}=vm), do: vm
-
   def run(vm) do
     vm
     |> process_instruction()
@@ -245,5 +250,23 @@ defmodule Aoc2019.Day9 do
     {nil, vm}
   end
 
+  def part1(input) do
+    input
+    |> input_to_map()
+    |> new_vm()
+    |> add_input(1)
+    |> run()
+    |> pop_output()
+    |> elem(0)
+  end
+
+  def part2(input) do
+    input
+    |> input_to_map()
+    |> new_vm()
+    |> add_input(2)
+    |> run()
+    |> Map.get(:output)
+  end
 
 end
